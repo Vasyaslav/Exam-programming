@@ -66,7 +66,7 @@ QString MyTcpServer::step_find(QString data){
         //qDebug() << data_split[2].split(' ').size();
         for (int i = 0; i < data_split[2].split(' ').size(); i++)
             numbers.append(data_split[2].split(' ')[i].toDouble());
-        heap_sort(numbers, numbers.size(), data_split[1].toInt());
+        //heap_sort(numbers, numbers.size(), data_split[1].toInt());
         for (int i = 0; i < data_split[2].split(' ').size(); i++)
             res = res + " " + QString::number(numbers[i]);
         //qDebug() << res;

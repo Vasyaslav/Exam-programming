@@ -1,37 +1,209 @@
-#include <QVector>
+#include "funcs.h"
 
-void sift(QVector<double> &A, int i, int m)
+using namespace std;
+
+Edge::Edge(int flow, int capacity, int u, int v)
 {
-  int j = i, k = i*2+1;	 // левый сын
-  while (k <= m)
-  {
-    if (k<m && A[k]<A[k+1]) k++; // больший сын
-    if (A[j] < A[k]){
-        double c;
-        c = A[j];
-        A[j] = A[k];
-        A[k] = c;
-        j = k; k = k*2+1;
-    }
-    else break;
-  }
+    this->flow = flow;
+    this->capacity = capacity;
+    this->u = u;
+    this->v = v;
 }
 
-void heap_sort(QVector<double> &A, int n, int steps)
+Vertex::Vertex(int h, int e_flow)
 {
-  int i, m;
-  // построение пирамиды
-  for (i = n/2; i >= 0; i--)
-    sift(A, i, n-1);
-  // сортировка массива
-  for (m = n-1; m >= 1; m--)
-  {
-    double c;
-    c = A[0];
-    A[0] = A[m];
-    A[m] = c;
-    sift(A, 0, m-1);
-    if (n - m == steps)
-        break;
-  }
+    this->h = h;
+    this->e_flow = e_flow;
+}
+
+Graph::Graph(int V)
+{
+    this->V = V;
+
+    // У всех вершин по умолчанию 0 избытка и 0 высота
+    for (int i = 0; i < V; i++)
+        ver.push_back(Vertex(0, 0));
+}
+
+void Graph::add_edge(int u, int v, int capacity)
+{
+    // У всех рёбер изначально поток равен 0
+    edge.push_back(Edge(0, capacity, u, v));
+}
+
+void Graph::preflow(int s)
+{
+    // Устанавливаем высоту истока равной ко-ву вершин в графе
+    ver[s].h = ver.size();
+
+    //
+    for (int i = 0; i < edge.size(); i++)
+    {
+        // Если вершины исходит из истока
+        if (edge[i].u == s)
+        {
+            // Поток ребра приравниваем пропускной способности
+            edge[i].flow = edge[i].capacity;
+
+            // Делаем избыток вершин равным потоку
+            ver[edge[i].v].e_flow += edge[i].flow;
+
+            // Добавляем обратные рёбра в остаточный граф с пропускной способностью 0
+            edge.push_back(Edge(-edge[i].flow, 0, edge[i].v, s));
+        }
+    }
+}
+
+void Graph::update_reverse_edge_flow(int i, int flow)
+{
+    int u = edge[i].v, v = edge[i].u;
+
+    for (int j = 0; j < edge.size(); j++)
+    {
+        if (edge[j].v == v && edge[j].u == u)
+        {
+            edge[j].flow -= flow;
+            return;
+        }
+    }
+
+    // Добавляем обратного рёбра в остаточный граф
+    Edge e = Edge(0, flow, u, v);
+    edge.push_back(e);
+}
+
+bool Graph::push(int u)
+{
+    // Проходим по всем рёбрам в поисках соседей, куда можно протолкну избыток
+    for (int i = 0; i < edge.size(); i++)
+    {
+        // Проверка, что у ребра исток равен нашей вершине
+        if (edge[i].u == u)
+        {
+            // Если поток по ребру равен пропускной способности, то протолкнуть больше не можем
+            if (edge[i].flow == edge[i].capacity)
+                continue;
+
+            // Проверка, что высота стока ребра меньше истока
+            if (ver[u].h > ver[edge[i].v].h)
+            {
+                int flow = min(edge[i].capacity - edge[i].flow,
+                               ver[u].e_flow);
+
+                ver[u].e_flow -= flow;
+
+                ver[edge[i].v].e_flow += flow;
+
+                edge[i].flow += flow;
+
+                //Добавление обратного ребра в остаточный граф
+                update_reverse_edge_flow(i, flow);
+
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void Graph::relabel(int u)
+{
+    // Для хранения минимальной высоты среди высот соседних вершин-стоков
+    int mh = INT_MAX;
+
+    // Поиск соседа-стока с минимальной высотой
+    for (int i = 0; i < edge.size(); i++)
+    {
+        if (edge[i].u == u)
+        {
+            // Если поток равен пропускной способности, то не учитываем вершину
+            if (edge[i].flow == edge[i].capacity)
+                continue;
+
+            // Изменение высоты
+            if (ver[edge[i].v].h < mh)
+            {
+                mh = ver[edge[i].v].h;
+                ver[u].h = mh + 1;
+            }
+        }
+    }
+}
+
+int Graph::get_max_flow(int s)
+{
+    preflow(s);
+
+    // Цикл до тех пор, пока не исчезнут все избытки у вершин
+    while ( over_flow_vertex(ver) != -1)
+    {
+        int u =  over_flow_vertex(ver);
+        if (!push(u))
+            relabel(u);
+    }
+
+    // Возврат избытка последней вершины
+    return ver.back().e_flow;
+}
+
+int  over_flow_vertex(QVector<Vertex>& ver)
+{
+    for (int i = 1; i < ver.size() - 1; i++)
+       if (ver[i].e_flow > 0)
+            return i;
+
+    return -1;
+}
+
+int max_flow_search(QVector<QVector<int>> mass)
+{
+    int V = mass.back()[1] + 1;
+    qDebug() << V;
+    qDebug() << mass;
+    Graph g(V);
+
+    for (int i = 0; i < mass.size(); i++)
+        g.add_edge(mass[i][0], mass[i][1], mass[i][2]);
+    /* Для теста
+    int V = 6;
+    g.add_edge(0, 1, 16);
+    g.add_edge(0, 2, 13);
+    g.add_edge(1, 2, 10);
+    g.add_edge(2, 1, 4);
+    g.add_edge(1, 3, 12);
+    g.add_edge(2, 4, 14);
+    g.add_edge(3, 2, 9);
+    g.add_edge(3, 5, 20);
+    g.add_edge(4, 3, 7);
+    g.add_edge(4, 5, 4);
+    Результат - 23.
+    */
+    int s = 0;
+
+    qDebug() << "Максимальный поток " << g.get_max_flow(s);
+    return 0;
+}
+
+QVector<QVector<int>> graph_generator(){
+    QVector<QVector<int>> mass;
+    QVector<int> b;
+    int ranges = QRandomGenerator::global()->generate() % 3 + 3;
+    for (int i = 0; i < ranges; i++){
+        b.append(i);
+        b.append(i + 1);
+        b.append(QRandomGenerator::global()->generate() % 10 + 5);
+        mass.append(b);
+        b.clear();
+        for (int j = i + 1; j < ranges; j++){
+            if (QRandomGenerator::global()->generate() % 10 > 4)
+            {
+                b.append(i);
+                b.append(j + 1);
+                b.append(QRandomGenerator::global()->generate() % 10 + 5);
+                mass.append(b);
+                b.clear();
+            }
+        }
+    }
+    return mass;
 }
