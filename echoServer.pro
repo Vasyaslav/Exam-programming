@@ -18,8 +18,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    funcs.cpp \
         main_exam.cpp \
-    mytcpserver-ex.cpp
+    mytcpserver-ex.cpp 
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

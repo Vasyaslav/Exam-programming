@@ -19,10 +19,11 @@ public slots:
     void slotClientDisconnected();
 
     void slotServerRead();
+    QString step_find(QString);
     //void slotReadClient();
 private:
     QTcpServer * mTcpServer;
-    QTcpSocket * mTcpSocket;
+    QMap<int, QTcpSocket*> mTcpSocket;
     int server_status;
 };
 #endif // MYSERVER_H
