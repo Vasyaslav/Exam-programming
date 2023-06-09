@@ -164,46 +164,50 @@ int max_flow_search(QVector<QVector<int>> mass)
 
     for (int i = 0; i < mass.size(); i++)
         g.add_edge(mass[i][0], mass[i][1], mass[i][2]);
-    /* Для теста
-    int V = 6;
-    g.add_edge(0, 1, 16);
-    g.add_edge(0, 2, 13);
-    g.add_edge(1, 2, 10);
-    g.add_edge(2, 1, 4);
-    g.add_edge(1, 3, 12);
-    g.add_edge(2, 4, 14);
-    g.add_edge(3, 2, 9);
-    g.add_edge(3, 5, 20);
-    g.add_edge(4, 3, 7);
-    g.add_edge(4, 5, 4);
-    Результат - 23.
-    */
     int s = 0;
 
     qDebug() << "Максимальный поток " << g.get_max_flow(s);
     return 0;
 }
 
-QVector<QVector<int>> graph_generator(){
+QVector<QVector<int>> graph_generator(int taskKey){
+    srand(taskKey);
     QVector<QVector<int>> mass;
     QVector<int> b;
-    int ranges = QRandomGenerator::global()->generate() % 3 + 3;
+    int ranges = rand() % 3 + 4;
     for (int i = 0; i < ranges; i++){
         b.append(i);
         b.append(i + 1);
-        b.append(QRandomGenerator::global()->generate() % 10 + 5);
+        b.append(rand() % 10 + 5);
         mass.append(b);
         b.clear();
         for (int j = i + 1; j < ranges; j++){
-            if (QRandomGenerator::global()->generate() % 10 > 4)
+            if (rand() % 10 > 4)
             {
                 b.append(i);
                 b.append(j + 1);
-                b.append(QRandomGenerator::global()->generate() % 10 + 5);
+                b.append(rand() % 10 + 5);
                 mass.append(b);
                 b.clear();
             }
         }
     }
     return mass;
+}
+
+QString create_task3(int taskKey)
+{
+    QVector<QVector<int>> i_edges = graph_generator(taskKey); //(вершина, вершина, пропускная способность) x 6
+
+    QString edges; // Вершины слитно, через пробел пропускная способность x 6
+
+    for (int i = 0; i < i_edges.size(); i++){
+        edges += QString::number(i_edges[i][0]) + QString::number(i_edges[i][1]) + " " + QString::number(i_edges[i][2]);
+        if (i != i_edges.size() - 1)
+            edges += " ";
+    }
+
+    qDebug() << edges;
+
+    return edges;
 }

@@ -3,7 +3,6 @@
 
 #include <QVector>
 #include <QDebug>
-#include <QRandomGenerator>
 
 #include <bits/stdc++.h>
 
@@ -122,6 +121,8 @@ int max_flow_search(QVector<QVector<int>> mass);
 /// Длина графа, наличие и пропускная способность ребра определяются случайно,
 /// но всегда имеётся ребро между n-ой вершиной и (n + 1)-ой вершиной,
 /// чтобы точно существовал путь от истока к стоку
-QVector<QVector<int>> graph_generator();
+QVector<QVector<int>> graph_generator(int taskKey);
+
+QString create_task3(int taskKey);
 
 #endif // FUNCS_H

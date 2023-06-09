@@ -12,5 +12,6 @@ int main(int argc, char *argv[])
 
     //max_flow_search();
 
-    max_flow_search(graph_generator());
+    int a = rand();
+    create_task3(a);
 }
